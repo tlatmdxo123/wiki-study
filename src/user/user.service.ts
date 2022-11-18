@@ -1,6 +1,6 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import * as uuid from 'uuid';
 import { ulid } from 'ulid';
 import { EmailService } from 'src/email/email.service';
@@ -12,6 +12,7 @@ export class UserService {
     private emailService: EmailService,
     @InjectRepository(UserEntity)
     private userRepository: Repository<UserEntity>,
+    private datasource: DataSource,
   ) {}
 
   // async getUserInfo(userId: string): Promise<UserInfo> {
@@ -38,7 +39,7 @@ export class UserService {
   async checkUserExists(emailAddress: string) {
     const user = await this.userRepository.findOneBy({ email: emailAddress });
 
-    return user !== undefined;
+    return user !== null;
   }
 
   async saveUser(
@@ -47,14 +48,28 @@ export class UserService {
     password: string,
     signupVerifyToken: string,
   ) {
-    const user = new UserEntity();
-    user.id = ulid();
-    user.name = name;
-    user.email = email;
-    user.password = password;
-    user.signupVerifyToken = signupVerifyToken;
+    const queryRunner = this.datasource.createQueryRunner();
 
-    await this.userRepository.save(user);
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const user = new UserEntity();
+      user.id = ulid();
+      user.name = name;
+      user.email = email;
+      user.password = password;
+      user.signupVerifyToken = signupVerifyToken;
+
+      await queryRunner.manager.save(user);
+
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      //에러가 발생하면 롤백
+      queryRunner.rollbackTransaction();
+    } finally {
+      //직접 생성한 queryRunner는 해제시켜 줘야함
+      await queryRunner.release();
+    }
   }
 
   async sendMemberJoinEmail(email: string, signupVerifyToken: string) {
