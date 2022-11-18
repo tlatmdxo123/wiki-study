@@ -6,6 +6,13 @@ import * as uuid from 'uuid';
 export class UserService {
   constructor(private emailService: EmailService) {}
 
+  // async getUserInfo(userId: string): Promise<UserInfo> {
+  //   //1.userId를 가진 유저가 존재하는지 DB에서 확인하고 없다면 에러처리
+  //   //2. 조회된 데이터를 UserInfo타입으로 응답
+
+  //   throw new Error('method not implemented');
+  // }
+
   async createUser(name: string, email: string, password: string) {
     await this.checkUserExists(email);
 

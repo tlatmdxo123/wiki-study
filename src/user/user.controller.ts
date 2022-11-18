@@ -7,6 +7,10 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  // @Get(':id')
+  // async getUserInfo(@Param('id') userId: string): Promise<UserInfo> {
+  //   return await this.userService.getUserInfo(userId);
+  // }
   @Post()
   async createUser(@Body() createUserDto: CreateUserDto) {
     const { name, email, password } = createUserDto;
