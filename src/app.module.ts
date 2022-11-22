@@ -8,7 +8,10 @@ import { UserModule } from './user/user.module';
 import { EmailService } from './email/email.service';
 import { EmailModule } from './email/email.module';
 import emailConfig from './config/emailConfig';
+import authConfig from './config/authConfig';
 import { validationSchema } from './config/validationSchema';
+import { AuthService } from './auth/auth.service';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -16,7 +19,7 @@ import { validationSchema } from './config/validationSchema';
     EmailModule,
     ConfigModule.forRoot({
       envFilePath: [`${__dirname}/config/env/.${process.env.NODE_ENV}.env`],
-      load: [emailConfig],
+      load: [emailConfig, authConfig],
       isGlobal: true,
       validationSchema,
     }),
@@ -30,8 +33,9 @@ import { validationSchema } from './config/validationSchema';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: Boolean(process.env.DATABASE_SYNCHRONIZE),
     }),
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EmailService],
+  providers: [AppService, EmailService, AuthService],
 })
 export class AppModule {}
