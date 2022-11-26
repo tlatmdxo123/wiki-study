@@ -10,6 +10,7 @@ import { ulid } from 'ulid';
 import { EmailService } from 'src/email/email.service';
 import { UserEntity } from './entities/user.entity';
 import { AuthService } from 'src/auth/auth.service';
+import { UserInfo } from './types/userInfo';
 
 @Injectable()
 export class UserService {
@@ -21,12 +22,19 @@ export class UserService {
     private datasource: DataSource,
   ) {}
 
-  // async getUserInfo(userId: string): Promise<UserInfo> {
-  //   //1.userId를 가진 유저가 존재하는지 DB에서 확인하고 없다면 에러처리
-  //   //2. 조회된 데이터를 UserInfo타입으로 응답
+  async getUserInfo(userId: string): Promise<UserInfo> {
+    const user = await this.userRepository.findOneBy({ id: userId });
 
-  //   throw new Error('method not implemented');
-  // }
+    if (!user) {
+      throw new NotFoundException('유저가 존재하지 않습니다');
+    }
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    };
+  }
 
   async createUser(name: string, email: string, password: string) {
     const userExist = await this.checkUserExists(email);

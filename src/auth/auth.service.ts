@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 import authConfig from 'src/config/authConfig';
@@ -14,6 +14,26 @@ export class AuthService {
   constructor(
     @Inject(authConfig.KEY) private config: ConfigType<typeof authConfig>,
   ) {}
+
+  verify(jwtString: string) {
+    console.log(jwtString, this.config.jwtSecret);
+    try {
+      const payload = jwt.verify(jwtString, this.config.jwtSecret) as (
+        | jwt.JwtPayload
+        | string
+      ) &
+        User;
+
+      const { id, email } = payload;
+
+      return {
+        userId: id,
+        email,
+      };
+    } catch (e) {
+      throw new UnauthorizedException();
+    }
+  }
 
   login(user: User) {
     const payload = { ...user };
