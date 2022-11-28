@@ -7,12 +7,14 @@ import {
   Headers,
   Param,
   UseGuards,
+  Inject,
+  Logger,
+  LoggerService,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { LoginUserDto } from './dto/login-user.dto';
-import { AuthService } from 'src/auth/auth.service';
 import { UserInfo } from './types/userInfo';
 import { AuthGuard } from 'src/auth.guard';
 
@@ -20,7 +22,7 @@ import { AuthGuard } from 'src/auth.guard';
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private authService: AuthService,
+    @Inject(Logger) private readonly logger: LoggerService,
   ) {}
 
   @UseGuards(AuthGuard)
@@ -34,6 +36,7 @@ export class UserController {
 
   @Post()
   async createUser(@Body() createUserDto: CreateUserDto) {
+    this.printWinstonLog(createUserDto);
     const { name, email, password } = createUserDto;
     await this.userService.createUser(name, email, password);
   }
@@ -49,5 +52,12 @@ export class UserController {
   async login(@Body() loginUserDto: LoginUserDto) {
     const { email, password } = loginUserDto;
     return await this.userService.login(email, password);
+  }
+
+  private printWinstonLog(dto) {
+    this.logger.error('error: ', dto);
+    this.logger.warn('warn: ', dto);
+    this.logger.verbose('verbose: ', dto);
+    this.logger.debug('debug: ', dto);
   }
 }
