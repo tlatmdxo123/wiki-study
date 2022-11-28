@@ -12,6 +12,11 @@ import authConfig from './config/authConfig';
 import { validationSchema } from './config/validationSchema';
 import { AuthService } from './auth/auth.service';
 import { AuthModule } from './auth/auth.module';
+import {
+  WinstonModule,
+  utilities as nestWinstonModuleUtilities,
+} from 'nest-winston';
+import winston from 'winston';
 
 @Module({
   imports: [
@@ -34,6 +39,19 @@ import { AuthModule } from './auth/auth.module';
       synchronize: Boolean(process.env.DATABASE_SYNCHRONIZE),
     }),
     AuthModule,
+    WinstonModule.forRoot({
+      transports: [
+        new winston.transports.Console({
+          level: process.env.NODE_ENV === 'production' ? 'info' : 'silly',
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            nestWinstonModuleUtilities.format.nestLike('MyApp', {
+              prettyPrint: true,
+            }),
+          ),
+        }),
+      ],
+    }),
   ],
   controllers: [AppController],
   providers: [AppService, EmailService, AuthService],
