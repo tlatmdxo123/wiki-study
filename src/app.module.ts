@@ -12,11 +12,13 @@ import authConfig from './config/authConfig';
 import { validationSchema } from './config/validationSchema';
 import { AuthService } from './auth/auth.service';
 import { AuthModule } from './auth/auth.module';
+import { ExceptionModule } from './exception/ExceptionModule';
 
 @Module({
   imports: [
     UserModule,
     EmailModule,
+    ExceptionModule,
     ConfigModule.forRoot({
       envFilePath: [`${__dirname}/config/env/.${process.env.NODE_ENV}.env`],
       load: [emailConfig, authConfig],
