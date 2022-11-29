@@ -13,6 +13,7 @@ import { validationSchema } from './config/validationSchema';
 import { AuthService } from './auth/auth.service';
 import { AuthModule } from './auth/auth.module';
 import { ExceptionModule } from './exception/ExceptionModule';
+import { LoggingModule } from './logging/loggin.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ExceptionModule } from './exception/ExceptionModule';
       synchronize: Boolean(process.env.DATABASE_SYNCHRONIZE),
     }),
     AuthModule,
+    LoggingModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService, AuthService, Logger],
