@@ -17,6 +17,20 @@ export class UserRepository implements IUserRepository {
     private userFactory: UserFactory,
   ) {}
 
+  async findById(id: string): Promise<User | null> {
+    const userEntity = await this.userRepository.findOneBy({ id });
+    if (!userEntity) return null;
+
+    const { email, name, signupVerifyToken, password } = userEntity;
+    return this.userFactory.reconstitute(
+      id,
+      name,
+      email,
+      signupVerifyToken,
+      password,
+    );
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     const userEntity = await this.userRepository.findOneBy({ email });
     if (!userEntity) return null;
