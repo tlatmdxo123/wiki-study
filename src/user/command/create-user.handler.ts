@@ -1,70 +1,43 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
-import { CreateUserCommand } from './create-user.command';
+import {
+  Inject,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import * as uuid from 'uuid';
-import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from '../entities/user.entity';
-import { DataSource, Repository } from 'typeorm';
 import { ulid } from 'ulid';
-import { UserCreatedEvent } from '../event/user-created.event';
+
+import { CreateUserCommand } from './create-user.command';
+import { IUserRepository } from '../domain/repository/iuser.repository';
+import { UserFactory } from '../domain/user.factory';
 
 @Injectable()
 @CommandHandler(CreateUserCommand)
 export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
   constructor(
-    private datasource: DataSource,
-    private eventBus: EventBus,
-    @InjectRepository(UserEntity)
-    private userRepository: Repository<UserEntity>,
+    private userFactory: UserFactory,
+    @Inject('UserRepository')
+    private userRepository: IUserRepository,
   ) {}
   async execute(command: CreateUserCommand) {
     const { email, name, password } = command;
-    const userExist = await this.checkUserExists(email);
-    if (userExist) {
+    const user = await this.userRepository.findByEmail(email);
+    if (user !== null) {
       throw new UnprocessableEntityException(
         '해당 이메일로는 가입할 수 없습니다',
       );
     }
 
+    const id = ulid();
     const signupVerifyToken = uuid.v1();
-    await this.saveUser(name, email, password, signupVerifyToken);
+    await this.userRepository.save(
+      id,
+      name,
+      email,
+      password,
+      signupVerifyToken,
+    );
 
-    this.eventBus.publish(new UserCreatedEvent(email, signupVerifyToken));
-  }
-
-  async checkUserExists(emailAddress: string) {
-    const user = await this.userRepository.findOneBy({ email: emailAddress });
-
-    return user !== null;
-  }
-
-  async saveUser(
-    name: string,
-    email: string,
-    password: string,
-    signupVerifyToken: string,
-  ) {
-    const queryRunner = this.datasource.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      const user = new UserEntity();
-      user.id = ulid();
-      user.name = name;
-      user.email = email;
-      user.password = password;
-      user.signupVerifyToken = signupVerifyToken;
-
-      await queryRunner.manager.save(user);
-
-      await queryRunner.commitTransaction();
-    } catch (e) {
-      //에러가 발생하면 롤백
-      queryRunner.rollbackTransaction();
-    } finally {
-      //직접 생성한 queryRunner는 해제시켜 줘야함
-      await queryRunner.release();
-    }
+    this.userFactory.create(id, name, email, signupVerifyToken, password);
   }
 }
