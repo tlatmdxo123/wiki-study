@@ -11,10 +11,15 @@ import { CreateUserHandler } from './command/create-user.handler';
 import { VerifyEmailCommand } from './command/verify-email.command';
 import { LoginHandler } from './command/login.handler';
 import { GetUserInfoQueryHandler } from './query/get-user-info.handler';
+import { UserFactory } from './domain/user.factory';
+import { UserRepository } from './infra/db/repository/UserRepository';
 
 const commandHandlers = [CreateUserHandler, VerifyEmailCommand, LoginHandler];
 const eventHandler = [UserEventsHandler];
 const queryHandlers = [GetUserInfoQueryHandler];
+const factories = [UserFactory];
+
+const repositories = [{ provide: 'UserFactory', useClass: UserRepository }];
 
 @Module({
   imports: [
@@ -24,6 +29,13 @@ const queryHandlers = [GetUserInfoQueryHandler];
     CqrsModule,
   ],
   controllers: [UserController],
-  providers: [Logger, ...commandHandlers, ...eventHandler, ...queryHandlers],
+  providers: [
+    Logger,
+    ...commandHandlers,
+    ...eventHandler,
+    ...queryHandlers,
+    ...factories,
+    ...repositories,
+  ],
 })
 export class UserModule {}
